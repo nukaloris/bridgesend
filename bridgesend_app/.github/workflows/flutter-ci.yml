@@ -1,0 +1,46 @@
+
+name: BridgeSend CI/CD
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bridgesend_app
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        channel: 'stable'
+    
+    - name: List files for debugging
+      run: ls -la
+    
+    - name: Install dependencies
+      run: flutter pub get
+    
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed lib/ || true
+    
+    - name: Analyze project source
+      run: flutter analyze || true
+    
+    - name: Build Web
+      run: flutter build web --release
+    
+    - name: Upload Web Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-build
+        path: bridgesend_app/build/web/
