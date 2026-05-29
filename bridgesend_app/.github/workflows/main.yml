@@ -1,9 +1,43 @@
-name: Deploy to GitHub Pages
+name: Deploy BridgeSend
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+      
+      - name: Check Flutter installation
+        run: flutter --version
+      
+      - name: Build Flutter Web App
+        run: |
+          cd bridgesend_app
+          echo "Building in: $(pwd)"
+          flutter pub get
+          flutter build web --release
+          echo "Build complete!"
+          ls -la build/web/
+      
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: bridgesend_app/build/web
+      
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
 
 permissions:
   contents: read
@@ -13,38 +47,3 @@ permissions:
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./bridgesend_app
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.3'
-          channel: 'stable'
-      
-      - name: Install dependencies
-        run: flutter pub get
-      
-      - name: Build Web
-        run: flutter build web --release
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'bridgesend_app/build/web'
-      
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
